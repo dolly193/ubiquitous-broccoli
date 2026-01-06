@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dolly | Rede Descentralizada</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* --- VARIÁVEIS & RESET --- */
+        :root {
+            --bg: #0a0a0c;
+            --surface: #16161a;
+            --surface-hover: #1f1f25;
+            --primary: #7f5af0;
+            --primary-glow: rgba(127, 90, 240, 0.4);
+            --text: #fffffe;
+            --text-dim: #94a1b2;
+            --success: #2cb67d;
+            --error: #ef4565;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Space Grotesk', sans-serif; outline: none; }
+        
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-x: hidden;
+        }
+
+        /* --- ANIMAÇÕES --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- COMPONENTES GERAIS --- */
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; width: 100%; flex: 1; display: flex; flex-direction: column; }
+        
+        header { 
+            display: flex; justify-content: space-between; align-items: center; padding: 30px 0; 
+            animation: fadeIn 0.6s var(--ease);
+        }
+        
+        .logo { font-size: 1.8rem; font-weight: 700; letter-spacing: -1px; color: var(--text); display: flex; align-items: center; gap: 10px; }
+        .logo span { color: var(--primary); text-shadow: 0 0 20px var(--primary-glow); }
+
+        button {
+            cursor: pointer; border: none; transition: all 0.3s var(--ease); font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: var(--primary); color: #fff; padding: 12px 24px; border-radius: 12px;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--primary-glow); }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .btn-ghost { background: transparent; color: var(--text-dim); padding: 8px 16px; }
+        .btn-ghost:hover { color: var(--text); }
+
+        input {
+            width: 100%; padding: 15px; background: var(--surface); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; color: var(--text); transition: 0.3s; margin-bottom: 15px;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-glow); }
+
+        /* --- AUTH SCREEN --- */
+        .auth-wrapper {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            animation: scaleIn 0.5s var(--ease);
+        }
+        .auth-box {
+            background: var(--surface); padding: 40px; border-radius: 24px; width: 100%; max-width: 400px;
+            border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .auth-title { font-size: 2rem; margin-bottom: 30px; text-align: center; }
+        .switch-auth { text-align: center; margin-top: 20px; color: var(--text-dim); font-size: 0.9rem; cursor: pointer; }
+        .switch-auth:hover { color: var(--primary); text-decoration: underline; }
+
+        /* --- DASHBOARD --- */
+        .dashboard { display: none; animation: fadeIn 0.8s var(--ease); width: 100%; }
+        
+        .grid-actions {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;
+        }
+        
+        .card {
+            background: var(--surface); padding: 30px; border-radius: 20px; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.03); transition: 0.4s var(--ease);
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 15px;
+        }
+        .card:hover { transform: translateY(-8px); border-color: var(--primary); background: var(--surface-hover); }
+        .card-icon { font-size: 2.5rem; margin-bottom: 10px; animation: float 3s infinite ease-in-out; }
+        .card h3 { font-size: 1.2rem; }
+        .card p { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* --- FILE LIST --- */
+        .section-title { margin-bottom: 20px; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        .file-list { display: flex; flex-direction: column; gap: 12px; }
+        
+        .file-item {
+            background: var(--surface); padding: 20px; border-radius: 16px; display: flex; justify-content: space-between;
+            align-items: center; transition: 0.3s; border: 1px solid transparent;
+            animation: fadeIn 0.5s var(--ease) backwards;
+        }
+        .file-item:hover { background: var(--surface-hover); transform: translateX(5px); border-color: rgba(255,255,255,0.1); }
+        .file-info { display: flex; flex-direction: column; gap: 5px; }
+        .file-name { font-weight: 600; }
+        .file-meta { font-size: 0.8rem; color: var(--text-dim); font-family: monospace; }
+        
+        .delete-btn {
+            background: rgba(239, 69, 101, 0.1); color: var(--error); padding: 8px 12px; border-radius: 8px;
+        }
+        .delete-btn:hover { background: var(--error); color: #fff; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px); z-index: 100; display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        
+        .modal-content {
+            background: var(--surface); padding: 40px; border-radius: 24px; width: 90%; max-width: 500px;
+            position: relative; border: 1px solid rgba(255,255,255,0.1); transform: scale(0.9); transition: transform 0.3s var(--ease);
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        
+        .close-modal { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: var(--text-dim); background: none; }
+        
+        .drop-zone {
+            border: 2px dashed var(--text-dim); border-radius: 16px; padding: 40px; text-align: center;
+            margin: 20px 0; transition: 0.3s; cursor: pointer;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: rgba(127, 90, 240, 0.05); }
+
+        /* --- TOAST & LOADER --- */
+        .toast {
+            position: fixed; bottom: 30px; right: 30px; background: var(--surface); padding: 15px 25px;
+            border-radius: 12px; border-left: 4px solid var(--primary); box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            transform: translateY(100px); transition: transform 0.4s var(--ease); z-index: 200; font-weight: 600;
+        }
+        .toast.show { transform: translateY(0); }
+        .toast.error { border-left-color: var(--error); }
+
+        .loader {
+            width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 1s linear infinite; display: none; margin-left: 10px;
+        }
+        .btn-primary .loader { display: inline-block; vertical-align: middle; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo"><span>⚡</span> Dolly</div>
+            <div id="user-nav" style="display: none;">
+                <span id="username-display" style="margin-right: 15px; color: var(--text-dim);"></span>
+                <button onclick="logout()" class="btn-ghost">Sair</button>
+            </div>
+        </header>
+
+        <!-- LOGIN / REGISTER -->
+        <div id="auth-section" class="auth-wrapper">
+            <div class="auth-box" id="login-box">
+                <h2 class="auth-title">Bem-vindo</h2>
+                <form onsubmit="handleLogin(event)">
+                    <input type="text" id="login-user" placeholder="Usuário" required>
+                    <input type="password" id="login-pass" placeholder="Senha" required>
+                    <button type="submit" class="btn-primary" style="width: 100%">Entrar <div class="loader"></div></button>
+                </form>
+                <div class="switch-auth" onclick="toggleAuth('register')">Não tem conta? Crie agora</div>
+            </div>
+
+            <div class="auth-box" id="register-box" style="display: none;">
+                <h2 class="auth-title">Criar Conta</h2>
+                <form onsubmit="handleRegister(event)">
+                    <input type="text" id="reg-user" placeholder="Usuário" required>
+                    <input type="password" id="reg-pass" placeholder="Senha" required>
+                    <button type="submit" class="btn-primary" style="width: 100%">Registrar <div class="loader"></div></button>
+                </form>
+                <div class="switch-auth" onclick="toggleAuth('login')">Já tem conta? Faça login</div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; animation: fadeIn 1s var(--ease);">
+                <button class="btn-ghost" onclick="openModal('dolly-modal')" style="border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 24px;">
+                    📜 Importar arquivo .dolly (Sem Login)
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard-section" class="dashboard">
+            <div class="grid-actions">
+                <div class="card" onclick="openModal('upload-modal')">
+                    <div class="card-icon">☁️</div>
+                    <h3>Upload</h3>
+                    <p>Guarde seus arquivos</p>
+                </div>
+                <div class="card" onclick="openModal('torrent-modal')">
+                    <div class="card-icon">🧲</div>
+                    <h3>Torrent</h3>
+                    <p>Baixar via Magnet</p>
+                </div>
+                <div class="card" onclick="openModal('dolly-modal')">
+                    <div class="card-icon">📜</div>
+                    <h3>Ler .dolly</h3>
+                    <p>Importar metadados</p>
+                </div>
+            </div>
+
+            <div class="section-title">📂 Meus Arquivos</div>
+            <div id="file-list" class="file-list">
+                <!-- Lista injetada via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="upload-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('upload-modal')">&times;</button>
+            <h2>Upload de Arquivo</h2>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <p>Clique ou arraste arquivos aqui</p>
+                <input type="file" id="file-input" hidden onchange="handleFileUpload(this.files[0])">
+            </div>
+            <p id="upload-status" style="text-align: center; color: var(--text-dim); font-size: 0.9rem;"></p>
+        </div>
+    </div>
+
+    <div id="torrent-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('torrent-modal')">&times;</button>
+            <h2>Adicionar Torrent</h2>
+            <p style="color: var(--text-dim); margin-bottom: 15px;">Cole o Magnet Link abaixo para iniciar o download no servidor.</p>
+            <input type="text" id="magnet-input" placeholder="magnet:?xt=urn:btih:...">
+            <button class="btn-primary" style="width: 100%" onclick="handleMagnet()">Iniciar Download</button>
+        </div>
+    </div>
+
+    <div id="dolly-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal('dolly-modal')">&times;</button>
+            <h2>Ler Arquivo .dolly</h2>
+            <div class="drop-zone" onclick="document.getElementById('dolly-input').click()">
+                <p>Selecione o arquivo .dolly</p>
+                <input type="file" id="dolly-input" hidden accept=".dolly" onchange="handleDollyRead(this.files[0])">
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // --- ESTADO & UTILITÁRIOS ---
+        const API = {
+            login: '/login',
+            register: '/register',
+            files: '/my_files',
+            upload: '/criar_dolly',
+            magnet: '/add_magnet',
+            readDolly: '/ler_dolly',
+            delete: '/delete_file'
+        };
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = isError ? 'toast show error' : 'toast show';
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function toggleAuth(view) {
+            document.getElementById('login-box').style.display = view === 'login' ? 'block' : 'none';
+            document.getElementById('register-box').style.display = view === 'register' ? 'block' : 'none';
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // --- LÓGICA DE AUTH ---
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const loader = btn.querySelector('.loader');
+            loader.style.display = 'inline-block';
+
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+
+            try {
+                const res = await fetch(API.login, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('auth-section').style.display = 'none';
+                    document.getElementById('dashboard-section').style.display = 'block';
+                    document.getElementById('user-nav').style.display = 'flex';
+                    document.getElementById('username-display').textContent = user;
+                    loadFiles();
+                } else {
+                    showToast(data.error || 'Erro no login', true);
+                }
+            } catch (err) { showToast('Erro de conexão', true); }
+            loader.style.display = 'none';
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const user = document.getElementById('reg-user').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            try {
+                const res = await fetch(API.register, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('Conta criada! Faça login.');
+                    toggleAuth('login');
+                } else {
+                    showToast(data.error, true);
+                }
+            } catch (err) { showToast('Erro ao registrar', true); }
+        }
+
+        function logout() {
+            fetch('/logout');
+            location.reload();
+        }
+
+        // --- ARQUIVOS ---
+        async function loadFiles() {
+            const list = document.getElementById('file-list');
+            list.innerHTML = '<p style="text-align:center; color:var(--text-dim)">Carregando...</p>';
+            
+            try {
+                const res = await fetch(API.files);
+                if (!res.ok) throw new Error();
+                const files = await res.json();
+                
+                list.innerHTML = '';
+                if (files.length === 0) {
+                    list.innerHTML = '<p style="text-align:center; color:var(--text-dim); padding:20px;">Nenhum arquivo encontrado.</p>';
+                    return;
+                }
+
+                files.forEach((f, index) => {
+                    const sizeMB = (f.size_bytes / 1024 / 1024).toFixed(2);
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.style.animationDelay = `${index * 0.1}s`;
+                    div.innerHTML = `
+                        <div class="file-info">
+                            <span class="file-name">${f.filename}</span>
+                            <span class="file-meta">${sizeMB} MB • Hash: ${f.hash.substring(0, 8)}...</span>
+                        </div>
+                        <button class="delete-btn" onclick="deleteFile('${f.hash}')">Excluir</button>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (e) {
+                list.innerHTML = '<p style="text-align:center; color:var(--error)">Erro ao carregar arquivos.</p>';
+            }
+        }
+
+        async function deleteFile(hash) {
+            if(!confirm('Tem certeza?')) return;
+            const res = await fetch(`${API.delete}/${hash}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('Arquivo deletado');
+                loadFiles();
+            } else {
+                showToast('Erro ao deletar', true);
+            }
+        }
+
+        // --- UPLOAD & TORRENT ---
+        async function handleFileUpload(file) {
+            if (!file) return;
+            const status = document.getElementById('upload-status');
+            status.textContent = `Enviando ${file.name}...`;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(API.upload, { method: 'POST', body: formData });
+                if (res.ok) {
+                    // Baixar o .dolly gerado
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name + ".dolly";
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    showToast('Upload concluído! .dolly baixado.');
+                    closeModal('upload-modal');
+                    loadFiles();
+                } else {
+                    const err = await res.json();
+                    showToast(err.error || 'Erro no upload', true);
+                }
+            } catch (e) { showToast('Erro na conexão', true); }
+            status.textContent = '';
+        }
+
+        async function handleMagnet() {
+            const link = document.getElementById('magnet-input').value;
+            if (!link) return;
+            
+            const res = await fetch(API.magnet, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ magnet_link: link })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Download iniciado em background!');
+                closeModal('torrent-modal');
+            } else {
+                showToast(data.error, true);
+            }
+        }
+
+        async function handleDollyRead(file) {
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('dolly_file', file);
+            
+            const res = await fetch(API.readDolly, { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            if (res.ok) {
+                closeModal('dolly-modal');
+                if(confirm(`Arquivo encontrado: ${data.file_info.original_name}\nDeseja baixar o conteúdo real?`)) {
+                    window.location.href = data.download_url;
+                }
+            } else {
+                showToast(data.error, true);
+            }
+        }
+
+        // Drag and Drop visual
+        const dz = document.getElementById('drop-zone');
+        dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+        dz.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dz.classList.remove('dragover');
+            handleFileUpload(e.dataTransfer.files[0]);
+        });
+    </script>
+</body>
+</html>
